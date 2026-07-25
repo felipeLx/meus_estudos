@@ -1,0 +1,13 @@
+{
+  "name": "prep-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Mobile study PWA over the interviews/ and airflow/ exercise files",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "npm run build && node scripts/serve.mjs 4173",
+    "serve": "node scripts/serve.mjs 4173",
+    "deploy": "npm run build && npx wrangler pages deploy public --project-name prep-web"
+  }
+}

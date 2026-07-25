@@ -1,0 +1,70 @@
+# prep-web
+
+Mobile study PWA over the exercise files in `../interviews` and `../airflow`.
+Static site, no backend, no dependencies. Deploys to Cloudflare Pages.
+
+- **358 cards / 30 decks** generated from the source files — nothing is duplicated by hand.
+- **Spaced repetition** (SM-2 variant), progress in `localStorage` on the device.
+- **Offline**: service worker caches the shell + content; installable to the home screen.
+- Card types: `code` (recall → reveal solution), `mcq` (quiz with rationale), `concept` (Q → explanation), `read` (full reference).
+
+## Use
+
+```bash
+npm run dev        # build content + serve http://localhost:4173
+npm run build      # regenerate public/content.json only
+npm run deploy     # build + wrangler pages deploy
+```
+
+Study loop: **Study now** takes everything due plus a few new cards.
+Reveal with the button / space / tap; grade Again–Easy (or swipe left = Again, right = Good).
+MCQ cards auto-grade. **Read mode** on any deck is plain reading, no scheduling.
+
+## How content is generated
+
+`scripts/build.mjs` reads the source files listed in its `SOURCES` table and emits
+`public/content.json`. Sources are never modified. Parsers:
+
+| Parser | Matches | Used for |
+|---|---|---|
+| `blocks` | `-- EXERCISE 3: …` / `# LEVEL 2: …` comment headers | SQL + Python drill files |
+| `mdqa` | `### Q4 ✅ Title` + `**Q:**` | `airflow/databricks_study_guide.md` |
+| `mcq` | `**1.**` + `- A)` options + answer key | quiz markdown |
+| `mdsections` | `## ` headings (split on `###` when long) | `nubank_gaps/`, concept notes |
+| `lesson` | `# === TITLE ===` banner + snippet | `airflow/01–18` |
+| `file` | whole file | reference DAGs, argument tables |
+
+Prompt/answer split rules: comment prose before the first code line is the prompt,
+everything after (attempt + `-- SOLUTION`) is the answer. Blocks written as
+`Q: … A: …` are split so the questions stay on the front.
+
+Cards previously answered wrong in the Databricks guide (`❌`) start at max difficulty
+so they surface earlier.
+
+### Adding content
+
+Two options:
+
+1. Edit the source files in `interviews/` or `airflow/` following the existing header
+   conventions, then `npm run build`.
+2. Author a deck inside this repo under `content/` (see `content/airflow_quiz.md` for the
+   MCQ format, `content/airflow_concepts.md` for open recall) and register it in the
+   `SOURCES` table in `scripts/build.mjs`.
+
+Card ids are derived from deck id + title slug + index, so progress survives a rebuild
+unless a card's title changes. Progress for cards that disappear is pruned on load.
+
+## Deploy (Cloudflare Pages)
+
+```bash
+npx wrangler login
+npm run deploy          # creates/updates the "prep-web" Pages project
+```
+
+Or connect the repo in the Cloudflare dashboard with:
+build command `node scripts/build.mjs`, output directory `public`.
+Note the build needs `../interviews` and `../airflow` present — for CI-based deploys
+either vendor the generated `public/content.json` (commit it) or run the build locally
+and deploy with wrangler.
+
+On the phone: open the URL → *Add to Home Screen* → runs full screen and offline.
