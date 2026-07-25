@@ -1,5 +1,5 @@
 /* Offline shell. Bump CACHE when the shell changes. */
-const CACHE = 'prep-v1';
+const CACHE = 'prep-v2';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', (e) => {
@@ -32,12 +32,18 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // shell: cache first
+  // shell: stale-while-revalidate — instant load, but a rebuilt app.js/style.css
+  // lands on the next visit instead of being pinned until the cache name changes
   e.respondWith(
-    caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE).then((c) => c.put(req, copy));
-      return res;
-    }))
+    caches.match(req).then((hit) => {
+      const net = fetch(req).then((res) => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
+        return res;
+      }).catch(() => hit);
+      return hit || net;
+    })
   );
 });

@@ -113,12 +113,66 @@ const SOURCES = [
     { id: 'airflow-quiz', title: 'Airflow — Concept Quiz', tags: ['airflow', 'quiz'] }),
   S(`${LOCAL}/airflow_concepts.md`, 'mdsections',
     { id: 'airflow-concepts', title: 'Airflow — Concepts & Recall', tags: ['airflow', 'concepts'] }),
+  S(`${LOCAL}/python_stdlib_quiz.md`, 'mcq',
+    { id: 'py-stdlib-quiz', title: 'Python — Stdlib Quiz (hackathon)', tags: ['python', 'quiz'] }),
+  S(`${LOCAL}/python_stdlib_recall.md`, 'mdsections',
+    { id: 'py-stdlib', title: 'Python — Stdlib Cheatsheet', tags: ['python', 'concepts'] }),
+  S(`${LOCAL}/python_hackathon_drills.md`, 'mdcards',
+    { id: 'py-hackathon', title: 'Python — Hackathon Drills', tags: ['python', 'drill'], lang: 'python' }),
+  S(`${LOCAL}/nix_deep_quiz.md`, 'mcq',
+    { id: 'nix-quiz', title: 'Nix — Deep Quiz (Spark/DE)', tags: ['pyspark', 'spark', 'quiz', 'nix'] }),
+  S(`${LOCAL}/nix_deep_concepts.md`, 'mdsections',
+    { id: 'nix-concepts', title: 'Nix — Deep Concepts', tags: ['pyspark', 'spark', 'concepts', 'nix'] }),
 
   // --- Behavioural / company ---
   S(`${INTERVIEWS}/english_tips.md`, 'mdsections',
     { id: 'english', title: 'English — Interview Phrasing', tags: ['english', 'behavioural'] }),
   S(`${INTERVIEWS}/exercises/caogemini.md`, 'mdsections',
     { id: 'behavioural', title: 'Behavioural — STAR Answers', tags: ['behavioural'] }),
+];
+
+/**
+ * Tracks = curated study paths. `deep: true` orders the session hardest-first
+ * and pulls more new cards per sitting.
+ */
+const TRACKS = [
+  {
+    id: 'nix',
+    title: 'Nix — Senior DE deep dive',
+    blurb: 'Spark internals, tuning, skew, formats, partitioning. Hardest cards first.',
+    deep: true,
+    decks: ['nix-quiz', 'nix-concepts', 'bigdata', 'pyspark', 'gap-spark', 'gap-part', 'gap-dw'],
+  },
+  {
+    id: 'python-tests',
+    title: 'Python coding tests',
+    blurb: 'Stdlib packages, CodeSignal/hackathon patterns, pure-Python drills.',
+    decks: ['py-stdlib-quiz', 'py-stdlib', 'py-hackathon', 'py-core', 'py-advanced', 'py-codesignal'],
+  },
+  {
+    id: 'sql',
+    title: 'SQL interview',
+    blurb: 'Windows, dedup, funnels, gaps-and-islands, Snowflake, Postgres.',
+    decks: ['sql-core', 'sql-window', 'sql-challenge', 'pg-nubank', 'pg-advanced', 'snowflake', 'pg-supp'],
+  },
+  {
+    id: 'airflow',
+    title: 'Airflow end to end',
+    blurb: 'Lessons 01–18, concept quiz, timed drills, production templates.',
+    decks: ['airflow-quiz', 'airflow-concepts', 'airflow-lessons', 'airflow-drills', 'the-one-dag', 'dag-production', 'airflow-args'],
+  },
+  {
+    id: 'theory',
+    title: 'DE theory & architecture',
+    blurb: 'Modelling, governance, lakehouse, Databricks cert, trade-off framing.',
+    decks: ['etl-quiz', 'databricks', 'gap-dw', 'gap-gov', 'gap-tradeoff', 'gap-part'],
+  },
+  {
+    id: 'interview-day',
+    title: 'Interview day — 15 min',
+    blurb: 'Fast mixed refresher: quizzes, gaps, English and STAR answers.',
+    decks: ['etl-quiz', 'airflow-quiz', 'nix-quiz', 'py-stdlib-quiz', 'gap-tradeoff', 'english', 'behavioural'],
+  },
 ];
 
 // ------------------------------------------------------------------
@@ -395,8 +449,39 @@ function parseMdSections(text, deck) {
   return cards;
 }
 
+/**
+ * Drill cards: `## Task title` + task text, then `### Solution` (or `**Answer:**`)
+ * splits front from back. Optional `<!-- difficulty: 4 -->` per section.
+ */
+function parseMdCards(text, deck) {
+  const cards = [];
+  for (const chunk of text.split(/\n(?=##\s)/)) {
+    const m = chunk.match(/^##\s*(.+)/);
+    if (!m) continue;
+    const title = m[1].trim();
+    const body = chunk.slice(chunk.indexOf('\n') + 1).trim();
+    if (!body) continue;
+
+    const cut = body.search(/^(###\s*Solution|\*\*Answer:?\*\*)/im);
+    const front = cut === -1 ? title : body.slice(0, cut).trim();
+    const back = cut === -1 ? body : body.slice(cut).replace(/^###\s*Solution\s*/i, '').trim();
+    const diff = body.match(/<!--\s*difficulty:\s*(\d)\s*-->/);
+
+    cards.push({
+      type: 'concept',
+      title,
+      difficulty: diff ? Number(diff[1]) : 3,
+      prompt: front.replace(/<!--[\s\S]*?-->/g, '').trim(),
+      answer: back.replace(/<!--[\s\S]*?-->/g, '').trim(),
+      lang: deck.lang || 'md',
+    });
+  }
+  return cards;
+}
+
 const PARSERS = {
   blocks: parseBlocks,
+  mdcards: parseMdCards,
   file: parseFile,
   lesson: parseLesson,
   mdqa: parseMdQA,
@@ -446,9 +531,14 @@ for (const src of SOURCES) {
   });
 }
 
+const built = [...decks.values()].filter((d) => d.cards.length);
+const known = new Set(built.map((d) => d.id));
+const badRefs = TRACKS.flatMap((t) => t.decks.filter((id) => !known.has(id)).map((id) => `${t.id} -> ${id}`));
+
 const bundle = {
   generatedAt: new Date().toISOString(),
-  decks: [...decks.values()].filter((d) => d.cards.length),
+  decks: built,
+  tracks: TRACKS.map((t) => ({ ...t, decks: t.decks.filter((id) => known.has(id)) })).filter((t) => t.decks.length),
 };
 
 mkdirSync(dirname(OUT), { recursive: true });
@@ -461,4 +551,6 @@ for (const d of bundle.decks) for (const c of d.cards) byType[c.type] = (byType[
 console.log(`\nBuilt ${bundle.decks.length} decks / ${total} cards -> ${relative(APP, OUT)}`);
 for (const d of bundle.decks) console.log(`  ${String(d.cards.length).padStart(4)}  ${d.id.padEnd(18)} ${d.title}`);
 console.log(`\n  types: ${Object.entries(byType).map(([k, v]) => `${k}=${v}`).join('  ')}`);
+console.log(`  tracks: ${bundle.tracks.map((t) => `${t.id}(${t.decks.reduce((n, id) => n + built.find((d) => d.id === id).cards.length, 0)})`).join('  ')}`);
+if (badRefs.length) console.log(`  ! track references unknown decks: ${badRefs.join(', ')}`);
 if (missing.length) console.log(`\n  missing sources (skipped):\n${missing.map((f) => '   - ' + f).join('\n')}`);

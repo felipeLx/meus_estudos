@@ -92,11 +92,23 @@ function streak() {
 // ------------------------------------------------------------------
 const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
-function buildSession(pool) {
+/**
+ * deep mode (tracks marked deep, or the "hard first" toggle): pull more new cards
+ * per sitting and front-load the hardest ones instead of shuffling flat.
+ */
+function buildSession(pool, deep = false) {
+  const size = deep ? Math.round(settings.sessionSize * 1.5) : settings.sessionSize;
+  const newCap = deep ? settings.newPerSession * 2 : settings.newPerSession;
+
   const due = pool.filter((c) => isDue(c.id)).sort((a, b) => progress[a.id].due - progress[b.id].due);
-  const fresh = shuffle(pool.filter((c) => isNew(c.id))).slice(0, settings.newPerSession);
-  const cards = shuffle([...due.slice(0, settings.sessionSize), ...fresh]).slice(0, settings.sessionSize + settings.newPerSession);
-  return { cards, i: 0, done: 0, correct: 0, revealed: false, answered: null };
+  let fresh = pool.filter((c) => isNew(c.id));
+  fresh = deep
+    ? fresh.sort((a, b) => b.difficulty - a.difficulty).slice(0, newCap)
+    : shuffle(fresh).slice(0, newCap);
+
+  let cards = [...due.slice(0, size), ...fresh];
+  cards = deep ? cards.sort((a, b) => b.difficulty - a.difficulty) : shuffle(cards);
+  return { cards: cards.slice(0, size + newCap), i: 0, done: 0, correct: 0, revealed: false, answered: null, deep };
 }
 
 // ------------------------------------------------------------------
@@ -269,8 +281,55 @@ function viewHome() {
       ${s.due || s.fresh ? `Study now · ${Math.min(settings.sessionSize, s.due) + Math.min(settings.newPerSession, s.fresh)} cards` : 'Nothing due — study ahead'}
     </button>
     <div class="faint">Today: ${s.today} reviews · ${s.learned} cards scheduled</div>
+    ${trackSection()}
     ${groups}
     <div class="faint" style="margin-top:20px">Built ${new Date(CONTENT.generatedAt).toLocaleDateString()} · <a href="#/settings">settings</a></div>
+  </main>`;
+}
+
+function trackSection() {
+  const tracks = CONTENT.tracks || [];
+  if (!tracks.length) return '';
+  return `<div class="group-title">Tracks</div>
+    <div class="tracks">${tracks.map((t) => {
+      const cards = trackCards(t);
+      const due = cards.filter((c) => isDue(c.id)).length;
+      return `<a class="track" href="#/track/${encodeURIComponent(t.id)}">
+        <div class="deck-top">
+          <span class="deck-title">${h(t.title)}${t.deep ? ' <span class="pill">deep</span>' : ''}</span>
+          <span class="pill ${due ? '' : 'zero'}">${due ? due + ' due' : cards.length + ' cards'}</span>
+        </div>
+        <div class="faint">${h(t.blurb)}</div>
+      </a>`;
+    }).join('')}</div>`;
+}
+
+function viewTrack(id) {
+  const t = trackById(id);
+  if (!t) return viewMissing();
+  const decks = trackDecks(t);
+  const cards = trackCards(t);
+  const due = cards.filter((c) => isDue(c.id)).length;
+  const fresh = cards.filter((c) => isNew(c.id)).length;
+
+  return `
+  <header class="bar">
+    <button class="iconbtn" data-go="#/">‹</button>
+    <h1>${h(t.title)}<span class="sub"> · ${cards.length} cards</span></h1>
+  </header>
+  <main class="stack">
+    <div class="faint">${h(t.blurb)}</div>
+    <div class="stats">
+      <div class="stat"><b>${due}</b><span>due</span></div>
+      <div class="stat"><b>${fresh}</b><span>new</span></div>
+      <div class="stat"><b>${decks.length}</b><span>decks</span></div>
+    </div>
+    <button class="btn primary" data-go="#/study/track:${encodeURIComponent(t.id)}">Study track</button>
+    <button class="btn" data-go="#/study/track:${encodeURIComponent(t.id)}:deep">
+      Deep session — hardest first
+    </button>
+    <div class="group-title">Decks in this track</div>
+    ${decks.map(deckRow).join('')}
   </main>`;
 }
 
@@ -332,7 +391,7 @@ function viewStudy() {
 
   if (isMcq) {
     body += `<div class="opts">${c.options.map((o) => `
-      <button class="opt" data-opt="${o.key}"><b>${o.key}</b><span>${h(o.text)}</span></button>`).join('')}</div>`;
+      <button class="opt" data-opt="${o.key}"><b>${o.key}</b><span>${inline(o.text)}</span></button>`).join('')}</div>`;
     if (session.answered) {
       body += `<div class="answer"><div class="faint">Correct: ${c.correct}</div>${c.answer ? `<div class="md">${md(c.answer)}</div>` : ''}</div>`;
     }
@@ -359,7 +418,7 @@ function viewStudy() {
   return `
   <header class="bar">
     <button class="iconbtn" data-go="#/">✕</button>
-    <h1>Session<span class="sub"> · ${session.done} done</span></h1>
+    <h1>${session.deep ? 'Deep session' : 'Session'}<span class="sub"> · ${session.done} done</span></h1>
     <button class="iconbtn" data-skip="1" aria-label="Skip">›</button>
   </header>
   <div class="study">
@@ -408,7 +467,7 @@ function viewRead(id, focus) {
       <details ${String(i) === focus ? 'open' : ''}>
         <summary>${h(c.title)}</summary>
         ${promptHtml(c)}
-        ${c.options ? `<ul>${c.options.map((o) => `<li>${o.key === c.correct ? '<strong>' : ''}${o.key}) ${h(o.text)}${o.key === c.correct ? ' ✓</strong>' : ''}</li>`).join('')}</ul>` : ''}
+        ${c.options ? `<ul class="md">${c.options.map((o) => `<li>${o.key === c.correct ? '<strong>' : ''}${o.key}) ${inline(o.text)}${o.key === c.correct ? ' ✓</strong>' : ''}</li>`).join('')}</ul>` : ''}
         ${c.answer ? answerHtml(c) : ''}
       </details>`).join('')}
   </main>`;
@@ -471,6 +530,7 @@ function render() {
   let html;
   if (!route) html = viewHome();
   else if (route === 'deck') html = viewDeck(decodeURIComponent(arg || ''));
+  else if (route === 'track') html = viewTrack(decodeURIComponent(arg || ''));
   else if (route === 'study') { ensureSession(decodeURIComponent(arg || 'all')); html = viewStudy(); }
   else if (route === 'read') html = viewRead(decodeURIComponent(arg || ''), params.get('c'));
   else if (route === 'search') html = viewSearch(params.get('q'));
@@ -488,13 +548,30 @@ function render() {
   if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
 }
 
+/** scope: "all" | "<deckId>" | "track:<trackId>" (optionally suffixed ":deep") */
 function ensureSession(scope) {
   if (session && session.scope === scope && session.i < session.cards.length) return;
-  const pool = scope === 'all'
-    ? CONTENT.decks.flatMap((d) => d.cards)
-    : (CONTENT.decks.find((d) => d.id === scope)?.cards || []);
-  session = { ...buildSession(pool), scope };
+
+  let deep = false;
+  let key = scope;
+  if (key.endsWith(':deep')) { deep = true; key = key.slice(0, -5); }
+
+  let pool;
+  if (key === 'all') {
+    pool = CONTENT.decks.flatMap((d) => d.cards);
+  } else if (key.startsWith('track:')) {
+    const t = trackById(key.slice(6));
+    deep = deep || !!t?.deep;
+    pool = trackCards(t);
+  } else {
+    pool = CONTENT.decks.find((d) => d.id === key)?.cards || [];
+  }
+  session = { ...buildSession(pool, deep), scope };
 }
+
+const trackById = (id) => (CONTENT.tracks || []).find((t) => t.id === id);
+const trackDecks = (t) => (t ? t.decks.map((id) => CONTENT.decks.find((d) => d.id === id)).filter(Boolean) : []);
+const trackCards = (t) => trackDecks(t).flatMap((d) => d.cards);
 
 // ------------------------------------------------------------------
 // events

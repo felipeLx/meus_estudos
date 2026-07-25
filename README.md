@@ -3,7 +3,8 @@
 Mobile study PWA over the exercise files in `../interviews` and `../airflow`.
 Static site, no backend, no dependencies. Deploys to Cloudflare Pages.
 
-- **358 cards / 30 decks** generated from the source files — nothing is duplicated by hand.
+- **470 cards / 35 decks** — most generated from the source files, the rest authored in `content/`.
+- **Tracks**: curated paths (Nix deep dive, Python coding tests, SQL, Airflow, theory, interview-day).
 - **Spaced repetition** (SM-2 variant), progress in `localStorage` on the device.
 - **Offline**: service worker caches the shell + content; installable to the home screen.
 - Card types: `code` (recall → reveal solution), `mcq` (quiz with rationale), `concept` (Q → explanation), `read` (full reference).
@@ -16,7 +17,9 @@ npm run build      # regenerate public/content.json only
 npm run deploy     # build + wrangler pages deploy
 ```
 
-Study loop: **Study now** takes everything due plus a few new cards.
+Study loop: **Study now** takes everything due plus a few new cards. A **track** narrows the
+pool to one subject; **Deep session — hardest first** orders by difficulty descending and
+pulls 1.5× reviews / 2× new cards, for the round before a hard interview.
 Reveal with the button / space / tap; grade Again–Easy (or swipe left = Again, right = Good).
 MCQ cards auto-grade. **Read mode** on any deck is plain reading, no scheduling.
 
@@ -33,6 +36,7 @@ MCQ cards auto-grade. **Read mode** on any deck is plain reading, no scheduling.
 | `mdsections` | `## ` headings (split on `###` when long) | `nubank_gaps/`, concept notes |
 | `lesson` | `# === TITLE ===` banner + snippet | `airflow/01–18` |
 | `file` | whole file | reference DAGs, argument tables |
+| `mdcards` | `## Task` + `### Solution` | `content/python_hackathon_drills.md` |
 
 Prompt/answer split rules: comment prose before the first code line is the prompt,
 everything after (attempt + `-- SOLUTION`) is the answer. Blocks written as
@@ -50,6 +54,10 @@ Two options:
 2. Author a deck inside this repo under `content/` (see `content/airflow_quiz.md` for the
    MCQ format, `content/airflow_concepts.md` for open recall) and register it in the
    `SOURCES` table in `scripts/build.mjs`.
+
+Tracks live in the `TRACKS` table in `scripts/build.mjs` — id, title, blurb, deck ids, and
+`deep: true` for hardest-first ordering. Unknown deck ids are dropped with a warning at build
+time, so a track never points at a deck that no longer exists.
 
 Card ids are derived from deck id + title slug + index, so progress survives a rebuild
 unless a card's title changes. Progress for cards that disappear is pruned on load.

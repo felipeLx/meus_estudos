@@ -113,6 +113,16 @@ main { flex: 1; padding: var(--pad); padding-bottom: 24px; }
 }
 .pill.zero { background: var(--bg-card); color: var(--fg-faint); }
 .progress { height: 4px; border-radius: 999px; background: var(--line); margin-top: 9px; overflow: hidden; }
+
+/* ---------- tracks ---------- */
+.tracks { display: grid; gap: 8px; }
+.track {
+  display: block; text-decoration: none; color: inherit;
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-soft));
+  border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: var(--radius); padding: 12px 14px;
+}
+.track .deck-title { font-size: 15px; }
 .progress i { display: block; height: 100%; background: var(--good); border-radius: inherit; }
 
 /* ---------- study card ---------- */
