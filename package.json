@@ -8,6 +8,10 @@
     "build": "node scripts/build.mjs",
     "dev": "npm run build && node scripts/serve.mjs 4173",
     "serve": "node scripts/serve.mjs 4173",
-    "deploy": "npm run build && npx wrangler pages deploy public --project-name prep-web"
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.114.0"
   }
 }
