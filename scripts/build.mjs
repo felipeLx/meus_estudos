@@ -119,6 +119,14 @@ const SOURCES = [
     { id: 'py-stdlib', title: 'Python — Stdlib Cheatsheet', tags: ['python', 'concepts'] }),
   S(`${LOCAL}/python_hackathon_drills.md`, 'mdcards',
     { id: 'py-hackathon', title: 'Python — Hackathon Drills', tags: ['python', 'drill'], lang: 'python' }),
+  S(`${LOCAL}/python_types_methods.md`, 'mdsections',
+    { id: 'py-types', title: 'Python — Types, Methods & Built-ins', tags: ['python', 'concepts'] }),
+  S(`${LOCAL}/python_types_quiz.md`, 'mcq',
+    { id: 'py-types-quiz', title: 'Python — Types & Methods Quiz', tags: ['python', 'quiz'] }),
+  S(`${LOCAL}/algorithms_core.md`, 'mdsections',
+    { id: 'algos', title: 'Algorithms — Core Patterns', tags: ['algorithms', 'python', 'concepts'] }),
+  S(`${LOCAL}/algorithms_quiz.md`, 'mcq',
+    { id: 'algos-quiz', title: 'Algorithms & Complexity Quiz', tags: ['algorithms', 'quiz'] }),
   S(`${LOCAL}/nix_deep_quiz.md`, 'mcq',
     { id: 'nix-quiz', title: 'Nix — Deep Quiz (Spark/DE)', tags: ['pyspark', 'spark', 'quiz', 'nix'] }),
   S(`${LOCAL}/nix_deep_concepts.md`, 'mdsections',
@@ -146,8 +154,21 @@ const TRACKS = [
   {
     id: 'python-tests',
     title: 'Python coding tests',
-    blurb: 'Stdlib packages, CodeSignal/hackathon patterns, pure-Python drills.',
-    decks: ['py-stdlib-quiz', 'py-stdlib', 'py-hackathon', 'py-core', 'py-advanced', 'py-codesignal'],
+    blurb: 'Types, methods, stdlib packages, CodeSignal/hackathon patterns, drills.',
+    decks: ['py-types-quiz', 'py-types', 'py-stdlib-quiz', 'py-stdlib', 'py-hackathon', 'py-core', 'py-advanced', 'py-codesignal'],
+  },
+  {
+    id: 'python-api',
+    title: 'Python API — types & methods',
+    blurb: 'dict / list / str / set / tuple operations, methods, built-in functions, traps.',
+    decks: ['py-types-quiz', 'py-types', 'py-stdlib', 'py-stdlib-quiz'],
+  },
+  {
+    id: 'algorithms',
+    title: 'Algorithms & complexity',
+    blurb: 'Pattern recognition, Big-O, search, windows, heaps, graphs, DP. Hardest first.',
+    deep: true,
+    decks: ['algos-quiz', 'algos', 'py-hackathon', 'py-codesignal'],
   },
   {
     id: 'sql',
@@ -171,7 +192,7 @@ const TRACKS = [
     id: 'interview-day',
     title: 'Interview day — 15 min',
     blurb: 'Fast mixed refresher: quizzes, gaps, English and STAR answers.',
-    decks: ['etl-quiz', 'airflow-quiz', 'nix-quiz', 'py-stdlib-quiz', 'gap-tradeoff', 'english', 'behavioural'],
+    decks: ['etl-quiz', 'airflow-quiz', 'nix-quiz', 'py-stdlib-quiz', 'algos-quiz', 'gap-tradeoff', 'english', 'behavioural'],
   },
 ];
 
@@ -190,6 +211,29 @@ function parseDifficulty(text) {
 }
 
 const isSeparator = (l) => /^[\s\-#=*_]*$/.test(l) || /^(--|#)\s*[=\-*]{4,}\s*$/.test(l);
+
+/** FNV-1a — stable across runs, so a card's option order never changes. */
+function hash32(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+/**
+ * Deterministic Fisher-Yates. Quiz sources are written with the correct answer
+ * in whatever slot was convenient; shuffling removes the positional tell without
+ * touching the source files.
+ */
+function seededShuffle(arr, seed) {
+  const a = [...arr];
+  let s = hash32(seed) || 1;
+  for (let i = a.length - 1; i > 0; i--) {
+    s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0;
+    const j = s % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 function stripComment(line, prefix) {
   const re = prefix === '--' ? /^\s*--\s?/ : /^\s*#\s?/;
@@ -400,13 +444,19 @@ function parseMCQ(text, deck) {
     }
     if (options.length < 2 || !key[n]) continue;
 
+    // Re-label after shuffling so the answer key position carries no information.
+    const correctText = options.find((o) => o.key === key[n])?.text;
+    const shuffled = seededShuffle(options, `${deck.id}:${n}:${question}`)
+      .map((o, i) => ({ key: 'ABCD'[i], text: o.text }));
+    const correct = shuffled.find((o) => o.text === correctText)?.key || key[n];
+
     cards.push({
       type: 'mcq',
       title: `Q${n}`,
       difficulty: 2,
       prompt: question,
-      options,
-      correct: key[n],
+      options: shuffled,
+      correct,
       answer: rationales[n] ? rationales[n] : '',
       lang: 'md',
     });
