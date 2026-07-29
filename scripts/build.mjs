@@ -132,6 +132,17 @@ const SOURCES = [
   S(`${LOCAL}/nix_deep_concepts.md`, 'mdsections',
     { id: 'nix-concepts', title: 'Nix — Deep Concepts', tags: ['pyspark', 'spark', 'concepts', 'nix'] }),
 
+  // --- Caylent (AWS Senior DE) ---
+  S(`${INTERVIEWS}/caylent_study_guide.md`, 'mdsections',
+    { id: 'caylent', title: 'Caylent — AWS Study Guide', tags: ['aws', 'caylent', 'concepts'],
+      skip: /^(Table of Contents|Study Resources|Priority Study Order|Interview Q&A Bank)/i }),
+  S(`${INTERVIEWS}/caylent_study_guide.md`, 'mdqbank',
+    { id: 'caylent-qa', title: 'Caylent — Interview Q&A Bank', tags: ['aws', 'caylent', 'behavioural'] }),
+  S(`${LOCAL}/aws_caylent_quiz.md`, 'mcq',
+    { id: 'aws-quiz', title: 'AWS Data Services Quiz', tags: ['aws', 'quiz', 'caylent'] }),
+  S(`${LOCAL}/aws_migration_deep.md`, 'mdsections',
+    { id: 'aws-migration', title: 'AWS — Migration, HA/DR & Cost Deep Dive', tags: ['aws', 'caylent', 'concepts'] }),
+
   // --- Behavioural / company ---
   S(`${INTERVIEWS}/english_tips.md`, 'mdsections',
     { id: 'english', title: 'English — Interview Phrasing', tags: ['english', 'behavioural'] }),
@@ -150,6 +161,13 @@ const TRACKS = [
     blurb: 'Spark internals, tuning, skew, formats, partitioning. Hardest cards first.',
     deep: true,
     decks: ['nix-quiz', 'nix-concepts', 'bigdata', 'pyspark', 'gap-spark', 'gap-part', 'gap-dw'],
+  },
+  {
+    id: 'caylent',
+    title: 'Caylent — AWS Senior DE',
+    blurb: 'Weekend order: DMS/SCT/CDC, Kinesis, RDS HA/DR, Python OOP + pytest, IaC, cost, security.',
+    deep: true,
+    decks: ['aws-quiz', 'aws-migration', 'caylent-qa', 'caylent', 'gap-part', 'gap-gov'],
   },
   {
     id: 'python-tests',
@@ -480,12 +498,17 @@ function parseMdSections(text, deck) {
   for (const chunk of text.split(/\n(?=##\s)/)) {
     const m = chunk.match(/^##\s*(.+)/);
     if (!m) continue;
-    const title = m[1].trim().replace(/^#+\s*/, '');
+    const title = m[1].trim().replace(/^#+\s*/, '').replace(/^\d+\.\s*/, '');
+    // Navigation / link sections carry nothing to study.
+    if (deck.skip && deck.skip.test(title)) continue;
     const body = chunk.slice(chunk.indexOf('\n') + 1).trim();
 
     if (body.length <= MAX || !/^###\s/m.test(body)) { push(title, body); continue; }
 
-    const [intro, ...subs] = body.split(/\n(?=###\s)/);
+    const parts = body.split(/\n(?=###\s)/);
+    // A section can open straight into `###` — then there is no intro, only subsections.
+    const intro = /^###\s/.test(parts[0]) ? '' : parts.shift();
+    const subs = parts;
     if (intro.trim().length > 200) push(title, intro.trim());
     for (const sub of subs) {
       const sm = sub.match(/^###\s*(.+)/);
@@ -529,9 +552,33 @@ function parseMdCards(text, deck) {
   return cards;
 }
 
+/**
+ * Q&A bank: `**Q: question**` followed by `A: "answer"`. Question on the front,
+ * answer behind the reveal — the point is rehearsing the answer out loud.
+ */
+function parseMdQBank(text, deck) {
+  const cards = [];
+  const re = /^\*\*Q:\s*([\s\S]*?)\*\*\s*\n+A:\s*([\s\S]*?)(?=\n\*\*Q:|\n#{2,3}\s|\n---\s*$|$)/gm;
+  for (const m of text.matchAll(re)) {
+    const question = m[1].replace(/\s+/g, ' ').trim();
+    const answer = m[2].trim().replace(/^"|"$/g, '').trim();
+    if (!question || answer.length < 40) continue;
+    cards.push({
+      type: 'concept',
+      title: question.replace(/\?$/, '').slice(0, 70),
+      difficulty: 4,          // spoken answers need more reps than facts
+      prompt: question,
+      answer,
+      lang: 'md',
+    });
+  }
+  return cards;
+}
+
 const PARSERS = {
   blocks: parseBlocks,
   mdcards: parseMdCards,
+  mdqbank: parseMdQBank,
   file: parseFile,
   lesson: parseLesson,
   mdqa: parseMdQA,

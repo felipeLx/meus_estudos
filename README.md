@@ -3,8 +3,8 @@
 Mobile study PWA over the exercise files in `../interviews` and `../airflow`.
 Static site, no backend, no dependencies. Deploys to Cloudflare Pages.
 
-- **470 cards / 35 decks** — most generated from the source files, the rest authored in `content/`.
-- **Tracks**: curated paths (Nix deep dive, Python coding tests, SQL, Airflow, theory, interview-day).
+- **696 cards / 43 decks** — most generated from the source files, the rest authored in `content/`.
+- **Tracks**: curated paths (Nix deep dive, Caylent AWS, Python coding tests, Python API, algorithms, SQL, Airflow, theory, interview-day).
 - **Spaced repetition** (SM-2 variant), progress in `localStorage` on the device.
 - **Offline**: service worker caches the shell + content; installable to the home screen.
 - Card types: `code` (recall → reveal solution), `mcq` (quiz with rationale), `concept` (Q → explanation), `read` (full reference).
@@ -37,6 +37,11 @@ MCQ cards auto-grade. **Read mode** on any deck is plain reading, no scheduling.
 | `lesson` | `# === TITLE ===` banner + snippet | `airflow/01–18` |
 | `file` | whole file | reference DAGs, argument tables |
 | `mdcards` | `## Task` + `### Solution` | `content/python_hackathon_drills.md` |
+| `mdqbank` | `**Q: …**` + `A: "…"` | `interviews/caylent_study_guide.md` Q&A bank |
+
+`mdsections` accepts `skip: /regex/` in the deck meta to drop navigation sections
+(tables of contents, link lists). MCQ options are **shuffled deterministically** by card,
+so the position of the correct answer in the source file carries no information.
 
 Prompt/answer split rules: comment prose before the first code line is the prompt,
 everything after (attempt + `-- SOLUTION`) is the answer. Blocks written as

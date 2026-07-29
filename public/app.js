@@ -230,8 +230,12 @@ function mdBlocks(text) {
   return html;
 }
 
-/** Prompt text from source files is plain-ish text; keep line breaks readable. */
-const promptHtml = (c) => `<div class="md">${md(c.prompt, c.lang)}</div>`;
+/**
+ * Prompt text from source files is plain-ish text; keep line breaks readable.
+ * Section and Q&A cards use the title as the prompt — render it once, not twice.
+ */
+const promptHtml = (c) =>
+  c.prompt.trim() === c.title.trim() ? '' : `<div class="md">${md(c.prompt, c.lang)}</div>`;
 
 function answerHtml(c) {
   if (c.type === 'code') return codeBlock(c.answer, c.lang === 'sql' ? 'sql' : 'python');
