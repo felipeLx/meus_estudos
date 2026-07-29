@@ -131,6 +131,10 @@ const SOURCES = [
     { id: 'nix-quiz', title: 'Nix — Deep Quiz (Spark/DE)', tags: ['pyspark', 'spark', 'quiz', 'nix'] }),
   S(`${LOCAL}/nix_deep_concepts.md`, 'mdsections',
     { id: 'nix-concepts', title: 'Nix — Deep Concepts', tags: ['pyspark', 'spark', 'concepts', 'nix'] }),
+  S(`${INTERVIEWS}/07_nix_round3_health_insurance.md`, 'mdsections',
+    { id: 'nix-health', title: 'Nix R3 — US Health Insurance & Live Data', tags: ['nix', 'domain', 'concepts'] }),
+  S(`${LOCAL}/health_insurance_quiz.md`, 'mcq',
+    { id: 'health-quiz', title: 'Health Insurance Data & Live Data Quiz', tags: ['nix', 'domain', 'quiz'] }),
 
   // --- Caylent (AWS Senior DE) ---
   S(`${INTERVIEWS}/caylent_study_guide.md`, 'mdsections',
@@ -155,6 +159,13 @@ const SOURCES = [
  * and pulls more new cards per sitting.
  */
 const TRACKS = [
+  {
+    id: 'nix-round3',
+    title: 'Nix Round 3 — health insurance + live data',
+    blurb: '90-min round: 837/835/834 claims domain, PHI, Avro + schema registry, streaming, then Spark.',
+    deep: true,
+    decks: ['health-quiz', 'nix-health', 'nix-quiz', 'nix-concepts', 'gap-part', 'english'],
+  },
   {
     id: 'nix',
     title: 'Nix — Senior DE deep dive',
