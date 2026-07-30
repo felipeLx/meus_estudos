@@ -3,8 +3,8 @@
 Mobile study PWA over the exercise files in `../interviews` and `../airflow`.
 Static site, no backend, no dependencies. Deploys to Cloudflare Pages.
 
-- **764 cards / 45 decks** — most generated from the source files, the rest authored in `content/`.
-- **Tracks**: curated paths (Nix round 3 health-insurance, Nix deep dive, Caylent AWS, Python coding tests, Python API, algorithms, SQL, Airflow, theory, interview-day).
+- **849 cards / 48 decks** — most generated from the source files, the rest authored in `content/`.
+- **Tracks**: curated paths (Nix round 3 health-insurance, Nix deep dive, Caylent AWS, Python coding tests, regex & files, Python API, algorithms, SQL, Airflow, theory, interview-day).
 - **Spaced repetition** (SM-2 variant), progress in `localStorage` on the device.
 - **Offline**: service worker caches the shell + content; installable to the home screen.
 - Card types: `code` (recall → reveal solution), `mcq` (quiz with rationale), `concept` (Q → explanation), `read` (full reference).
