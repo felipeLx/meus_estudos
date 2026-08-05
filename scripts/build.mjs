@@ -22,48 +22,67 @@ const OUT = resolve(APP, 'public', 'content.json');
 // ------------------------------------------------------------------
 const S = (file, parser, deck) => ({ file, parser, deck });
 
+/**
+ * Every deck declares a `cat`, and the app groups the deck list by it — no more
+ * guessing a group from tags. Decks authored in this repo live in the matching
+ * `content/<folder>/`, so the folder and the category stay in sync by eye.
+ * Order here is the order shown on the home screen.
+ */
+const CATEGORIES = [
+  { id: 'sql', title: 'SQL & warehousing' },
+  { id: 'python', title: 'Python' },
+  { id: 'pyspark', title: 'PySpark & big data' },
+  { id: 'airflow', title: 'Airflow' },
+  { id: 'cloud', title: 'Cloud — AWS & Databricks' },
+  { id: 'backend', title: 'Backend & APIs' },
+  { id: 'courses', title: 'Courses (Coursera)' },
+  { id: 'theory', title: 'DE theory & architecture' },
+  { id: 'domain', title: 'Domain knowledge' },
+  { id: 'soft', title: 'Interview & soft skills' },
+];
+
 const SOURCES = [
   // --- SQL ---
   S(`${INTERVIEWS}/exercises/01_sql_exercises.sql`, 'blocks',
-    { id: 'sql-core', title: 'SQL — Core Interview Set', tags: ['sql'], lang: 'sql' }),
+    { id: 'sql-core', title: 'SQL — Core Interview Set', cat: 'sql', tags: ['sql'], lang: 'sql' }),
   S(`${INTERVIEWS}/exercises/06_sql_window_exercises.sql`, 'blocks',
-    { id: 'sql-window', title: 'SQL — Window Functions', tags: ['sql', 'window'], lang: 'sql' }),
+    { id: 'sql-window', title: 'SQL — Window Functions', cat: 'sql', tags: ['sql', 'window'], lang: 'sql' }),
   S(`${INTERVIEWS}/exercises/07_snowflake_exercises.sql`, 'blocks',
-    { id: 'snowflake', title: 'Snowflake', tags: ['sql', 'snowflake'], lang: 'sql' }),
+    { id: 'snowflake', title: 'Snowflake', cat: 'sql', tags: ['sql', 'snowflake'], lang: 'sql' }),
   S(`${INTERVIEWS}/exercises/08_postgresql_nubank_prep.sql`, 'blocks',
-    { id: 'pg-nubank', title: 'PostgreSQL — Nubank Prep', tags: ['sql', 'postgres', 'nubank'], lang: 'sql' }),
+    { id: 'pg-nubank', title: 'PostgreSQL — Nubank Prep', cat: 'sql', tags: ['sql', 'postgres', 'nubank'], lang: 'sql' }),
   S(`${INTERVIEWS}/exercises/10_postgresql_nubank_advanced.sql`, 'blocks',
-    { id: 'pg-advanced', title: 'PostgreSQL — Advanced Patterns', tags: ['sql', 'postgres', 'nubank'], lang: 'sql' }),
+    { id: 'pg-advanced', title: 'PostgreSQL — Advanced Patterns', cat: 'sql', tags: ['sql', 'postgres', 'nubank'], lang: 'sql' }),
   S(`${INTERVIEWS}/exercises/12_bairesdev_sql_challenge.sql`, 'blocks',
-    { id: 'sql-challenge', title: 'SQL — Rapid Challenge (Q1–Q12)', tags: ['sql', 'drill'], lang: 'sql' }),
+    { id: 'sql-challenge', title: 'SQL — Rapid Challenge (Q1–Q12)', cat: 'sql', tags: ['sql', 'drill'], lang: 'sql' }),
   S(`${INTERVIEWS}/exercises/posrgresql_nubank_supp.sql`, 'blocks',
-    { id: 'pg-supp', title: 'PostgreSQL — Supplement', tags: ['sql', 'postgres'], lang: 'sql' }),
+    { id: 'pg-supp', title: 'PostgreSQL — Supplement', cat: 'sql', tags: ['sql', 'postgres'], lang: 'sql' }),
 
   // --- Python / PySpark ---
   S(`${INTERVIEWS}/exercises/05_python_exercises.py`, 'blocks',
-    { id: 'py-core', title: 'Python — Pure Python Drills', tags: ['python'], lang: 'python' }),
+    { id: 'py-core', title: 'Python — Pure Python Drills', cat: 'python', tags: ['python'], lang: 'python' }),
   S(`${INTERVIEWS}/exercises/09_python_advanced_nubank.py`, 'blocks',
-    { id: 'py-advanced', title: 'Python — Advanced (Nubank)', tags: ['python', 'nubank'], lang: 'python' }),
+    { id: 'py-advanced', title: 'Python — Advanced (Nubank)', cat: 'python', tags: ['python', 'nubank'], lang: 'python' }),
   S(`${INTERVIEWS}/exercises/11_bcgx_codesignal_prep.py`, 'blocks',
-    { id: 'py-codesignal', title: 'Python — CodeSignal Style (BCGX)', tags: ['python', 'pandas'], lang: 'python' }),
+    { id: 'py-codesignal', title: 'Python — CodeSignal Style (BCGX)', cat: 'python', tags: ['python', 'pandas'], lang: 'python' }),
   S(`${INTERVIEWS}/exercises/02_pyspark_exercises.py`, 'blocks',
-    { id: 'pyspark', title: 'PySpark — Transformations', tags: ['pyspark', 'spark'], lang: 'python' }),
+    { id: 'pyspark', title: 'PySpark — Transformations', cat: 'pyspark', tags: ['pyspark', 'spark'], lang: 'python' }),
   S(`${INTERVIEWS}/exercises/15_nix_bigdata_prep.py`, 'blocks',
-    { id: 'bigdata', title: 'Big Data — Spark Deep Dive (Nix)', tags: ['pyspark', 'spark'], lang: 'python' }),
+    { id: 'bigdata', title: 'Big Data — Spark Deep Dive (Nix)', cat: 'pyspark', tags: ['pyspark', 'spark'], lang: 'python' }),
   S(`${INTERVIEWS}/exercises/14_bairesdev_etl_challenge.py`, 'blocks',
-    { id: 'etl-challenge', title: 'ETL Challenge — End to End', tags: ['python', 'etl'], lang: 'python' }),
+    { id: 'etl-challenge', title: 'ETL Challenge — End to End', cat: 'pyspark', tags: ['python', 'etl'], lang: 'python' }),
 
   // --- Airflow ---
   S(`${INTERVIEWS}/exercises/08_airflow_drills.py`, 'blocks',
-    { id: 'airflow-drills', title: 'Airflow — Timed Drills', tags: ['airflow', 'drill'], lang: 'python' }),
+    { id: 'airflow-drills', title: 'Airflow — Timed Drills', cat: 'airflow', tags: ['airflow', 'drill'], lang: 'python' }),
   S(`${INTERVIEWS}/exercises/05_THE_ONE_DAG.py`, 'file',
-    { id: 'the-one-dag', title: 'Airflow — THE ONE DAG (reference)', tags: ['airflow', 'reference'], lang: 'python' }),
+    { id: 'the-one-dag', title: 'Airflow — THE ONE DAG (reference)', cat: 'airflow', tags: ['airflow', 'reference'], lang: 'python' }),
   S(`${INTERVIEWS}/exercises/03_production_dag_example.py`, 'file',
-    { id: 'dag-production', title: 'Airflow — Production DAG Example', tags: ['airflow', 'reference'], lang: 'python' }),
+    { id: 'dag-production', title: 'Airflow — Production DAG Example', cat: 'airflow', tags: ['airflow', 'reference'], lang: 'python' }),
   S(`${INTERVIEWS}/exercises/04_dag_metas_improved.py`, 'file',
-    { id: 'dag-metas', title: 'Airflow — Metas DAG (improved)', tags: ['airflow', 'reference'], lang: 'python' }),
+    { id: 'dag-metas', title: 'Airflow — Metas DAG (improved)', cat: 'airflow', tags: ['airflow', 'reference'], lang: 'python' }),
   S(`${INTERVIEWS}/exercises/06_ALL_ARGUMENTS_REFERENCE.txt`, 'blocks',
-    { id: 'airflow-args', title: 'Airflow — All Arguments Reference', tags: ['airflow', 'reference'], lang: 'python' }),
+    { id: 'airflow-args', title: 'Airflow — All Arguments Reference', cat: 'airflow', tags: ['airflow', 'reference'], lang: 'python' }),
 
   // --- Airflow curriculum (../airflow) ---
   ...[
@@ -86,78 +105,104 @@ const SOURCES = [
     ['17_variable_get.py', 'Variable.get()'],
     ['18_full_dag_template.py', 'Full DAG template'],
   ].map(([f, t]) => S(`${AIRFLOW}/${f}`, 'lesson',
-    { id: 'airflow-lessons', title: 'Airflow — Lessons 01–18', tags: ['airflow', 'lesson'], lang: 'python', cardTitle: t })),
+    { id: 'airflow-lessons', title: 'Airflow — Lessons 01–18', cat: 'airflow', tags: ['airflow', 'lesson'], lang: 'python', cardTitle: t })),
   S(`${AIRFLOW}/snippets/dag_factory.py`, 'file',
-    { id: 'airflow-lessons', title: 'Airflow — Lessons 01–18', tags: ['airflow', 'lesson'], lang: 'python', cardTitle: 'DAG factory (config-driven)' }),
+    { id: 'airflow-lessons', title: 'Airflow — Lessons 01–18', cat: 'airflow', tags: ['airflow', 'lesson'], lang: 'python', cardTitle: 'DAG factory (config-driven)' }),
   S(`${AIRFLOW}/snippets/dag_factory_config.yaml`, 'file',
-    { id: 'airflow-lessons', title: 'Airflow — Lessons 01–18', tags: ['airflow', 'lesson'], lang: 'yaml', cardTitle: 'DAG factory YAML config' }),
+    { id: 'airflow-lessons', title: 'Airflow — Lessons 01–18', cat: 'airflow', tags: ['airflow', 'lesson'], lang: 'yaml', cardTitle: 'DAG factory YAML config' }),
+  S(`${LOCAL}/airflow/airflow_quiz.md`, 'mcq',
+    { id: 'airflow-quiz', title: 'Airflow — Concept Quiz', cat: 'airflow', tags: ['airflow', 'quiz'] }),
+  S(`${LOCAL}/airflow/airflow_concepts.md`, 'mdsections',
+    { id: 'airflow-concepts', title: 'Airflow — Concepts & Recall', cat: 'airflow', tags: ['airflow', 'concepts'] }),
+
+  // --- Python (content/python/) ---
+  S(`${LOCAL}/python/python_stdlib_quiz.md`, 'mcq',
+    { id: 'py-stdlib-quiz', title: 'Python — Stdlib Quiz (hackathon)', cat: 'python', tags: ['python', 'quiz'] }),
+  S(`${LOCAL}/python/python_stdlib_recall.md`, 'mdsections',
+    { id: 'py-stdlib', title: 'Python — Stdlib Cheatsheet', cat: 'python', tags: ['python', 'concepts'] }),
+  S(`${LOCAL}/python/python_hackathon_drills.md`, 'mdcards',
+    { id: 'py-hackathon', title: 'Python — Hackathon Drills', cat: 'python', tags: ['python', 'drill'], lang: 'python' }),
+  S(`${LOCAL}/python/python_types_methods.md`, 'mdsections',
+    { id: 'py-types', title: 'Python — Types, Methods & Built-ins', cat: 'python', tags: ['python', 'concepts'] }),
+  S(`${LOCAL}/python/python_types_quiz.md`, 'mcq',
+    { id: 'py-types-quiz', title: 'Python — Types & Methods Quiz', cat: 'python', tags: ['python', 'quiz'] }),
+  S(`${LOCAL}/python/algorithms_core.md`, 'mdsections',
+    { id: 'algos', title: 'Algorithms — Core Patterns', cat: 'python', tags: ['algorithms', 'python', 'concepts'] }),
+  S(`${LOCAL}/python/algorithms_quiz.md`, 'mcq',
+    { id: 'algos-quiz', title: 'Algorithms & Complexity Quiz', cat: 'python', tags: ['algorithms', 'quiz'] }),
+
+  // --- Courses (content/courses/) — Coursera Google IT Automation ---
+  S(`${LOCAL}/courses/regex_core.md`, 'mdsections',
+    { id: 'regex', title: 'Regex & String Manipulation — Core', cat: 'courses', tags: ['python', 'regex', 'concepts'] }),
+  S(`${LOCAL}/courses/regex_quiz.md`, 'mcq',
+    { id: 'regex-quiz', title: 'Regex, os & csv Quiz', cat: 'courses', tags: ['python', 'regex', 'quiz'] }),
+  S(`${LOCAL}/courses/python_files_regex_drills.md`, 'mdcards',
+    { id: 'files-regex', title: 'Python — Files, CSV & Regex Drills', cat: 'courses', tags: ['python', 'regex', 'drills'] }),
+  S(`${LOCAL}/courses/troubleshooting_core.md`, 'mdsections',
+    { id: 'debug', title: 'Troubleshooting, Debugging & Performance', cat: 'courses', tags: ['python', 'debugging', 'concepts'] }),
+  S(`${LOCAL}/courses/troubleshooting_quiz.md`, 'mcq',
+    { id: 'debug-quiz', title: 'Troubleshooting & Debugging Quiz', cat: 'courses', tags: ['python', 'debugging', 'quiz'] }),
+  S(`${LOCAL}/courses/troubleshooting_drills.md`, 'mdcards',
+    { id: 'debug-drills', title: 'Troubleshooting & Automation Drills', cat: 'courses', tags: ['python', 'debugging', 'drills'] }),
+
+  // --- PySpark / Spark (content/pyspark/) ---
+  S(`${LOCAL}/pyspark/nix_deep_quiz.md`, 'mcq',
+    { id: 'nix-quiz', title: 'Nix — Deep Quiz (Spark/DE)', cat: 'pyspark', tags: ['pyspark', 'spark', 'quiz', 'nix'] }),
+  S(`${LOCAL}/pyspark/nix_deep_concepts.md`, 'mdsections',
+    { id: 'nix-concepts', title: 'Nix — Deep Concepts', cat: 'pyspark', tags: ['pyspark', 'spark', 'concepts', 'nix'] }),
 
   // --- Concept / theory ---
-  S(`${AIRFLOW}/databricks_study_guide.md`, 'mdqa',
-    { id: 'databricks', title: 'Databricks — Certification Q&A', tags: ['databricks', 'quiz'] }),
   S(`${INTERVIEWS}/exercises/13_bairesdev_proficiency_quiz.md`, 'mcq',
-    { id: 'etl-quiz', title: 'ETL / DE Concepts — Multiple Choice', tags: ['concepts', 'quiz'] }),
+    { id: 'etl-quiz', title: 'ETL / DE Concepts — Multiple Choice', cat: 'theory', tags: ['concepts', 'quiz'] }),
   S(`${INTERVIEWS}/nubank_gaps/01_spark_tuning.md`, 'mdsections',
-    { id: 'gap-spark', title: 'Gap — Spark Tuning', tags: ['concepts', 'spark'] }),
+    { id: 'gap-spark', title: 'Gap — Spark Tuning', cat: 'theory', tags: ['concepts', 'spark'] }),
   S(`${INTERVIEWS}/nubank_gaps/02_dw_vs_lake.md`, 'mdsections',
-    { id: 'gap-dw', title: 'Gap — DW vs Lake vs Lakehouse', tags: ['concepts', 'architecture'] }),
+    { id: 'gap-dw', title: 'Gap — DW vs Lake vs Lakehouse', cat: 'theory', tags: ['concepts', 'architecture'] }),
   S(`${INTERVIEWS}/nubank_gaps/03_governance.md`, 'mdsections',
-    { id: 'gap-gov', title: 'Gap — Governance', tags: ['concepts', 'governance'] }),
+    { id: 'gap-gov', title: 'Gap — Governance', cat: 'theory', tags: ['concepts', 'governance'] }),
   S(`${INTERVIEWS}/nubank_gaps/04_partitioning.md`, 'mdsections',
-    { id: 'gap-part', title: 'Gap — Partitioning', tags: ['concepts', 'architecture'] }),
+    { id: 'gap-part', title: 'Gap — Partitioning', cat: 'theory', tags: ['concepts', 'architecture'] }),
   S(`${INTERVIEWS}/nubank_gaps/05_tradeoff_framework.md`, 'mdsections',
-    { id: 'gap-tradeoff', title: 'Gap — Trade-off Framework', tags: ['concepts', 'framework'] }),
+    { id: 'gap-tradeoff', title: 'Gap — Trade-off Framework', cat: 'theory', tags: ['concepts', 'framework'] }),
 
-  // --- Authored in this repo (content/) ---
-  S(`${LOCAL}/airflow_quiz.md`, 'mcq',
-    { id: 'airflow-quiz', title: 'Airflow — Concept Quiz', tags: ['airflow', 'quiz'] }),
-  S(`${LOCAL}/airflow_concepts.md`, 'mdsections',
-    { id: 'airflow-concepts', title: 'Airflow — Concepts & Recall', tags: ['airflow', 'concepts'] }),
-  S(`${LOCAL}/python_stdlib_quiz.md`, 'mcq',
-    { id: 'py-stdlib-quiz', title: 'Python — Stdlib Quiz (hackathon)', tags: ['python', 'quiz'] }),
-  S(`${LOCAL}/python_stdlib_recall.md`, 'mdsections',
-    { id: 'py-stdlib', title: 'Python — Stdlib Cheatsheet', tags: ['python', 'concepts'] }),
-  S(`${LOCAL}/python_hackathon_drills.md`, 'mdcards',
-    { id: 'py-hackathon', title: 'Python — Hackathon Drills', tags: ['python', 'drill'], lang: 'python' }),
-  S(`${LOCAL}/python_types_methods.md`, 'mdsections',
-    { id: 'py-types', title: 'Python — Types, Methods & Built-ins', tags: ['python', 'concepts'] }),
-  S(`${LOCAL}/python_types_quiz.md`, 'mcq',
-    { id: 'py-types-quiz', title: 'Python — Types & Methods Quiz', tags: ['python', 'quiz'] }),
-  S(`${LOCAL}/regex_core.md`, 'mdsections',
-    { id: 'regex', title: 'Regex & String Manipulation — Core', tags: ['python', 'regex', 'concepts'] }),
-  S(`${LOCAL}/regex_quiz.md`, 'mcq',
-    { id: 'regex-quiz', title: 'Regex, os & csv Quiz', tags: ['python', 'regex', 'quiz'] }),
-  S(`${LOCAL}/python_files_regex_drills.md`, 'mdcards',
-    { id: 'files-regex', title: 'Python — Files, CSV & Regex Drills', tags: ['python', 'regex', 'drills'] }),
-  S(`${LOCAL}/algorithms_core.md`, 'mdsections',
-    { id: 'algos', title: 'Algorithms — Core Patterns', tags: ['algorithms', 'python', 'concepts'] }),
-  S(`${LOCAL}/algorithms_quiz.md`, 'mcq',
-    { id: 'algos-quiz', title: 'Algorithms & Complexity Quiz', tags: ['algorithms', 'quiz'] }),
-  S(`${LOCAL}/nix_deep_quiz.md`, 'mcq',
-    { id: 'nix-quiz', title: 'Nix — Deep Quiz (Spark/DE)', tags: ['pyspark', 'spark', 'quiz', 'nix'] }),
-  S(`${LOCAL}/nix_deep_concepts.md`, 'mdsections',
-    { id: 'nix-concepts', title: 'Nix — Deep Concepts', tags: ['pyspark', 'spark', 'concepts', 'nix'] }),
-  S(`${INTERVIEWS}/07_nix_round3_health_insurance.md`, 'mdsections',
-    { id: 'nix-health', title: 'Nix R3 — US Health Insurance & Live Data', tags: ['nix', 'domain', 'concepts'] }),
-  S(`${LOCAL}/health_insurance_quiz.md`, 'mcq',
-    { id: 'health-quiz', title: 'Health Insurance Data & Live Data Quiz', tags: ['nix', 'domain', 'quiz'] }),
-
-  // --- Caylent (AWS Senior DE) ---
+  // --- Cloud (content/cloud/) — AWS, Databricks ---
+  S(`${AIRFLOW}/databricks_study_guide.md`, 'mdqa',
+    { id: 'databricks', title: 'Databricks — Certification Q&A', cat: 'cloud', tags: ['databricks', 'quiz'] }),
   S(`${INTERVIEWS}/caylent_study_guide.md`, 'mdsections',
-    { id: 'caylent', title: 'Caylent — AWS Study Guide', tags: ['aws', 'caylent', 'concepts'],
+    { id: 'caylent', title: 'Caylent — AWS Study Guide', cat: 'cloud', tags: ['aws', 'caylent', 'concepts'],
       skip: /^(Table of Contents|Study Resources|Priority Study Order|Interview Q&A Bank)/i }),
   S(`${INTERVIEWS}/caylent_study_guide.md`, 'mdqbank',
-    { id: 'caylent-qa', title: 'Caylent — Interview Q&A Bank', tags: ['aws', 'caylent', 'behavioural'] }),
-  S(`${LOCAL}/aws_caylent_quiz.md`, 'mcq',
-    { id: 'aws-quiz', title: 'AWS Data Services Quiz', tags: ['aws', 'quiz', 'caylent'] }),
-  S(`${LOCAL}/aws_migration_deep.md`, 'mdsections',
-    { id: 'aws-migration', title: 'AWS — Migration, HA/DR & Cost Deep Dive', tags: ['aws', 'caylent', 'concepts'] }),
+    { id: 'caylent-qa', title: 'Caylent — Interview Q&A Bank', cat: 'cloud', tags: ['aws', 'caylent', 'behavioural'] }),
+  S(`${LOCAL}/cloud/aws_caylent_quiz.md`, 'mcq',
+    { id: 'aws-quiz', title: 'AWS Data Services Quiz', cat: 'cloud', tags: ['aws', 'quiz', 'caylent'] }),
+  S(`${LOCAL}/cloud/aws_migration_deep.md`, 'mdsections',
+    { id: 'aws-migration', title: 'AWS — Migration, HA/DR & Cost Deep Dive', cat: 'cloud', tags: ['aws', 'caylent', 'concepts'] }),
+
+  // --- Backend / API interview (content/backend/) ---
+  S(`${LOCAL}/backend/backend_api_core.md`, 'mdsections',
+    { id: 'backend', title: 'Python Backend & REST API — Core', cat: 'backend', tags: ['backend', 'api', 'python', 'concepts'] }),
+  S(`${LOCAL}/backend/graphql_core.md`, 'mdsections',
+    { id: 'graphql', title: 'GraphQL — Schema, Resolvers & Traps', cat: 'backend', tags: ['backend', 'api', 'graphql', 'concepts'] }),
+  S(`${LOCAL}/backend/api_security.md`, 'mdsections',
+    { id: 'api-security', title: 'API Security & Robustness', cat: 'backend', tags: ['backend', 'api', 'security', 'concepts'] }),
+  S(`${LOCAL}/backend/backend_drills.md`, 'mdcards',
+    { id: 'backend-drills', title: 'Backend API — Coding Drills', cat: 'backend', tags: ['backend', 'api', 'python', 'drills'] }),
+  S(`${LOCAL}/backend/ai_tools_incident.md`, 'mdsections',
+    { id: 'ai-tools', title: 'AI Dev Tools Eval & Incident Reporting', cat: 'backend', tags: ['backend', 'process', 'concepts'] }),
+  S(`${LOCAL}/backend/backend_api_quiz.md`, 'mcq',
+    { id: 'backend-quiz', title: 'Backend, API & Security Quiz', cat: 'backend', tags: ['backend', 'api', 'security', 'quiz'] }),
+
+  // --- Domain knowledge (content/domain/) ---
+  S(`${INTERVIEWS}/07_nix_round3_health_insurance.md`, 'mdsections',
+    { id: 'nix-health', title: 'Nix R3 — US Health Insurance & Live Data', cat: 'domain', tags: ['nix', 'domain', 'concepts'] }),
+  S(`${LOCAL}/domain/health_insurance_quiz.md`, 'mcq',
+    { id: 'health-quiz', title: 'Health Insurance Data & Live Data Quiz', cat: 'domain', tags: ['nix', 'domain', 'quiz'] }),
 
   // --- Behavioural / company ---
   S(`${INTERVIEWS}/english_tips.md`, 'mdsections',
-    { id: 'english', title: 'English — Interview Phrasing', tags: ['english', 'behavioural'] }),
+    { id: 'english', title: 'English — Interview Phrasing', cat: 'soft', tags: ['english', 'behavioural'] }),
   S(`${INTERVIEWS}/exercises/caogemini.md`, 'mdsections',
-    { id: 'behavioural', title: 'Behavioural — STAR Answers', tags: ['behavioural'] }),
+    { id: 'behavioural', title: 'Behavioural — STAR Answers', cat: 'soft', tags: ['behavioural'] }),
 ];
 
 /**
@@ -187,16 +232,29 @@ const TRACKS = [
     decks: ['aws-quiz', 'aws-migration', 'caylent-qa', 'caylent', 'gap-part', 'gap-gov'],
   },
   {
+    id: 'backend-api',
+    title: 'Backend API — 50-min AI interview',
+    blurb: 'REST + GraphQL, pydantic validation, error handling, API security, AI-tool eval & bug reports.',
+    deep: true,
+    decks: ['backend-quiz', 'backend-drills', 'api-security', 'backend', 'graphql', 'ai-tools', 'py-types', 'english'],
+  },
+  {
     id: 'python-tests',
     title: 'Python coding tests',
     blurb: 'Types, methods, stdlib packages, CodeSignal/hackathon patterns, drills.',
-    decks: ['py-types-quiz', 'py-types', 'py-stdlib-quiz', 'py-stdlib', 'regex-quiz', 'files-regex', 'py-hackathon', 'py-core', 'py-advanced', 'py-codesignal'],
+    decks: ['py-types-quiz', 'py-types', 'py-stdlib-quiz', 'py-stdlib', 'regex-quiz', 'files-regex', 'debug-quiz', 'debug-drills', 'py-hackathon', 'py-core', 'py-advanced', 'py-codesignal'],
   },
   {
     id: 'regex-files',
     title: 'Regex, strings & files',
     blurb: 'Coursera chapter: re, greedy vs lazy, groups, sub, os.path, csv reader vs DictReader.',
     decks: ['regex-quiz', 'regex', 'files-regex'],
+  },
+  {
+    id: 'debugging',
+    title: 'Troubleshooting & debugging',
+    blurb: 'Coursera module 4: bottlenecks, ab/psutil/rsync, multiprocessing, plus pdb, profiling and bug reports.',
+    decks: ['debug-quiz', 'debug', 'debug-drills', 'ai-tools'],
   },
   {
     id: 'python-api',
@@ -633,6 +691,7 @@ for (const src of SOURCES) {
     decks.set(src.deck.id, {
       id: src.deck.id,
       title: src.deck.title,
+      cat: src.deck.cat || 'other',
       tags: src.deck.tags,
       sources: [],
       cards: [],
@@ -655,8 +714,19 @@ const built = [...decks.values()].filter((d) => d.cards.length);
 const known = new Set(built.map((d) => d.id));
 const badRefs = TRACKS.flatMap((t) => t.decks.filter((id) => !known.has(id)).map((id) => `${t.id} -> ${id}`));
 
+const catIds = new Set(CATEGORIES.map((c) => c.id));
+const badCats = built.filter((d) => !catIds.has(d.cat)).map((d) => `${d.id} -> ${d.cat}`);
+
+// Category order drives the home screen; keep only the ones that have decks,
+// and append a catch-all so a deck can never disappear from the list.
+const categories = [
+  ...CATEGORIES.filter((c) => built.some((d) => d.cat === c.id)),
+  ...(badCats.length ? [{ id: 'other', title: 'Other' }] : []),
+];
+
 const bundle = {
   generatedAt: new Date().toISOString(),
+  categories,
   decks: built,
   tracks: TRACKS.map((t) => ({ ...t, decks: t.decks.filter((id) => known.has(id)) })).filter((t) => t.decks.length),
 };
@@ -669,8 +739,13 @@ const byType = {};
 for (const d of bundle.decks) for (const c of d.cards) byType[c.type] = (byType[c.type] || 0) + 1;
 
 console.log(`\nBuilt ${bundle.decks.length} decks / ${total} cards -> ${relative(APP, OUT)}`);
-for (const d of bundle.decks) console.log(`  ${String(d.cards.length).padStart(4)}  ${d.id.padEnd(18)} ${d.title}`);
+for (const c of bundle.categories) {
+  const ds = bundle.decks.filter((d) => d.cat === c.id || (c.id === 'other' && !catIds.has(d.cat)));
+  console.log(`\n  ${c.title}  (${ds.reduce((n, d) => n + d.cards.length, 0)} cards)`);
+  for (const d of ds) console.log(`  ${String(d.cards.length).padStart(4)}  ${d.id.padEnd(18)} ${d.title}`);
+}
 console.log(`\n  types: ${Object.entries(byType).map(([k, v]) => `${k}=${v}`).join('  ')}`);
 console.log(`  tracks: ${bundle.tracks.map((t) => `${t.id}(${t.decks.reduce((n, id) => n + built.find((d) => d.id === id).cards.length, 0)})`).join('  ')}`);
 if (badRefs.length) console.log(`  ! track references unknown decks: ${badRefs.join(', ')}`);
+if (badCats.length) console.log(`  ! decks with an unknown category: ${badCats.join(', ')}`);
 if (missing.length) console.log(`\n  missing sources (skipped):\n${missing.map((f) => '   - ' + f).join('\n')}`);

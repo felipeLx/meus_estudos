@@ -1,5 +1,5 @@
 /* Offline shell. Bump CACHE when the shell changes. */
-const CACHE = 'prep-v3';
+const CACHE = 'prep-v4';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', (e) => {

@@ -248,27 +248,40 @@ function answerHtml(c) {
 // ------------------------------------------------------------------
 const h = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const GROUPS = [
-  ['SQL', (d) => d.tags.includes('sql')],
-  ['Python & Spark', (d) => d.tags.some((t) => ['python', 'pyspark', 'spark', 'pandas'].includes(t))],
-  ['Airflow', (d) => d.tags.includes('airflow')],
-  ['Concepts & Theory', (d) => d.tags.some((t) => ['concepts', 'databricks', 'architecture', 'governance', 'framework', 'quiz', 'etl'].includes(t))],
-  ['Soft skills', (d) => d.tags.some((t) => ['behavioural', 'english'].includes(t))],
-];
+/**
+ * Deck groups come from the bundle (`categories` + each deck's `cat`), which the
+ * build derives from the content folder. Older bundles have neither, so fall
+ * back to one flat group rather than dropping decks.
+ */
+function deckGroups() {
+  const cats = CONTENT.categories || [];
+  if (!cats.length) return [['All decks', CONTENT.decks]];
+  const seen = new Set();
+  const groups = cats.map((c) => {
+    const decks = CONTENT.decks.filter((d) => d.cat === c.id);
+    decks.forEach((d) => seen.add(d.id));
+    return [c.title, decks];
+  }).filter(([, decks]) => decks.length);
+  const rest = CONTENT.decks.filter((d) => !seen.has(d.id));
+  if (rest.length) groups.push(['Other', rest]);
+  return groups;
+}
+
+const openGroups = new Set(JSON.parse(localStorage.getItem('prep.openGroups') || '[]'));
 
 function viewHome() {
   const s = globalStats();
-  const used = new Set();
-  let groups = '';
-
-  for (const [name, match] of GROUPS) {
-    const decks = CONTENT.decks.filter((d) => !used.has(d.id) && match(d));
-    if (!decks.length) continue;
-    decks.forEach((d) => used.add(d.id));
-    groups += `<div class="group-title">${h(name)}</div>` + decks.map(deckRow).join('');
-  }
-  const rest = CONTENT.decks.filter((d) => !used.has(d.id));
-  if (rest.length) groups += `<div class="group-title">Other</div>` + rest.map(deckRow).join('');
+  const groups = deckGroups().map(([name, decks]) => {
+    const cards = decks.reduce((n, d) => n + d.cards.length, 0);
+    const due = decks.reduce((n, d) => n + d.cards.filter((c) => isDue(c.id)).length, 0);
+    return `<details class="group" data-group="${h(name)}"${openGroups.has(name) ? ' open' : ''}>
+      <summary class="group-title">
+        <span>${h(name)}</span>
+        <span class="group-meta">${due ? due + ' due · ' : ''}${decks.length} decks · ${cards} cards</span>
+      </summary>
+      ${decks.map(deckRow).join('')}
+    </details>`;
+  }).join('');
 
   return `
   <header class="bar">
@@ -580,6 +593,14 @@ const trackCards = (t) => trackDecks(t).flatMap((d) => d.cards);
 // ------------------------------------------------------------------
 // events
 // ------------------------------------------------------------------
+// Remember which deck groups are expanded, so the home screen looks the same next visit.
+document.addEventListener('toggle', (e) => {
+  const g = e.target.closest?.('.group[data-group]');
+  if (!g) return;
+  if (g.open) openGroups.add(g.dataset.group); else openGroups.delete(g.dataset.group);
+  localStorage.setItem('prep.openGroups', JSON.stringify([...openGroups]));
+}, true);
+
 document.addEventListener('click', (e) => {
   const t = e.target.closest('[data-go],[data-reveal],[data-grade],[data-next],[data-skip],[data-again],[data-opt],[data-reset],[data-export]');
   if (!t) return;
